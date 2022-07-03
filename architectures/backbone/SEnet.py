@@ -1,3 +1,7 @@
+"""
+SEnet
+"""
+
 import torch.nn as nn
 from typing import Type, Any, Callable, Union, List, Optional
 import torch
