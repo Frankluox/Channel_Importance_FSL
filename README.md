@@ -56,7 +56,7 @@ If you find our work useful in your research please consider citing:
 @inproceedings{
 Luo2022Channel,
 title={Channel Importance Matters in Few-Shot Image Classification},
-author={Luo, xu and Xu, Jing and Xu, Zenglin},
+author={Luo, Xu and Xu, Jing and Xu, Zenglin},
 booktitle={International Conference on Machine Learning},
 year={2022},
 }
