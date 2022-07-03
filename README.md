@@ -43,7 +43,6 @@ Download any of the 19 test-time datasets in Table 1 of our paper for evaluation
 - EuroSAT: Dowaload and extract [EuroSAT.zip](http://madm.dfki.de/files/sentinel/EuroSAT.zip), and use the resultant folder as the root directory.
 - ChestX: Download from [kaggle](https://www.kaggle.com/nih-chest-xrays/data), and use the resultant folder as the root directory.
 - Real: Download and extract [real.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/real.zip), and use the resultant folder as the root directory.
-- Real: Download and extract [real.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/real.zip), and use the resultant folder as the root directory.
 - Sketch: Download and extract [sketch.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/sketch.zip), and use the resultant folder as the root directory.
 - Infograph: Download and extract [infograph.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/infograph.zip), and use the resultant folder as the root directory.
 - Painting: Download and extract [painting.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/painting.zip), and use the resultant folder as the root directory.
