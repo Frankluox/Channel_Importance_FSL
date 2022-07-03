@@ -1,9 +1,8 @@
-tqdm==4.62.3
-torch==1.8.1
+tqdm
+torch>=1.4.0
 scipy==1.7.0
-torchvision==0.9.1
-numpy==1.19.5
+numpy>=1.13.3
 qpth==0.0.15
 pandas==1.1.5
 Pillow==9.2.0
-scikit_learn==1.1.1
+scikit_learn
