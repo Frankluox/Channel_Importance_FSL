@@ -39,7 +39,7 @@ Download any of the 19 test-time datasets in Table 1 of our paper for evaluation
 - Quick Draw: Download and extract [quickdraw.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/quickdraw.zip), and use the resultant folder as the root directory.
 - Fungi: Download and extract [fungi_train_val.tgz](https://labs.gbif.org/fgvcx/2018/fungi_train_val.tgz), and use the `images/` folder as the root directory.
 - Plant Disease: Download from [kaggle](https://www.kaggle.com/saroz014/plant-disease/), and use the train split as the root directory.
-- ISIC: Download and extract [ISIC2018_Task3_Training_Input.zip](https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip) and [ISIC2018_Task3_Training_GroundTruth.zip](https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_GroundTruth.zip), then extract them into the same directory as the root directory.
+- ISIC: Download [ISIC2018_Task3_Training_Input.zip](https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip) and [ISIC2018_Task3_Training_GroundTruth.zip](https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_GroundTruth.zip), then extract them into the same directory as the root directory.
 - EuroSAT: Dowaload and extract [EuroSAT.zip](http://madm.dfki.de/files/sentinel/EuroSAT.zip), and use the resultant folder as the root directory.
 - ChestX: Download from [kaggle](https://www.kaggle.com/nih-chest-xrays/data), and use the resultant folder as the root directory.
 - Real: Download and extract [real.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/real.zip), and use the resultant folder as the root directory.
