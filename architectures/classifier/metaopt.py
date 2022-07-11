@@ -3,6 +3,18 @@ import torch.nn as nn
 from qpth.qp import QPFunction
 import torch.nn.functional as F
 
+def simple_transform(x, beta):
+    x = 1/torch.pow(torch.log(1/x+1),beta)
+    return x
+
+def extended_simple_transform(x, beta):
+    zero_tensor = torch.zeros_like(x)
+    x_pos = torch.maximum(x, zero_tensor)
+    x_neg = torch.minimum(x, zero_tensor)
+    x_pos = 1/torch.pow(torch.log(1/(x_pos+1e-5)+1),beta)
+    x_neg = -1/torch.pow(torch.log(1/(-x_neg+1e-5)+1),beta)
+    return x_pos+
+
 def computeGramMatrix(A, B):
     """
     Constructs a linear kernel matrix between A and B.
@@ -44,15 +56,6 @@ def one_hot(indices, depth):
     
     return encoded_indicies
 
-
-
-def simple_transform(x, beta):
-    zero_tensor = torch.zeros_like(x)
-    x_pos = torch.maximum(x, zero_tensor)
-    x_neg = torch.minimum(x, zero_tensor)
-    x_pos = 1/torch.pow(torch.log(1/(x_pos+1e-5)+1),beta)
-    x_neg = -1/torch.pow(torch.log(1/(-x_neg+1e-5)+1),beta)
-    return x_pos+x_neg
 
 def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, double_precision=True, maxIter=3):
     """
