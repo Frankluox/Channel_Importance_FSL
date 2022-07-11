@@ -4,6 +4,10 @@ import torch.nn.functional as F
 from torch import Tensor
 
 def simple_transform(x, beta):
+    x = 1/torch.pow(torch.log(1/x+1),beta)
+    return x
+
+def extended_simple_transform(x, beta):
     zero_tensor = torch.zeros_like(x)
     x_pos = torch.maximum(x, zero_tensor)
     x_neg = torch.minimum(x, zero_tensor)
