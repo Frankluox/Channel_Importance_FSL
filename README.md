@@ -8,6 +8,10 @@ Few-Shot Learning (FSL) requires vision models to quickly adapt to brand-new cla
 
 ![](simple_transformation.png)
 
+## Where to find the simple channel-wise transformtion
+
+The single-line `simple_transform` function has been put inside each test-time classifier, e.g., see in `architectures/classifier/proto_head.py`.
+
 ## Installation
 A list of packages to install is available in `requirements.txt`, just install them using command:
 
