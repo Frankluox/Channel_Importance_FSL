@@ -13,7 +13,7 @@ def extended_simple_transform(x, beta):
     x_neg = torch.minimum(x, zero_tensor)
     x_pos = 1/torch.pow(torch.log(1/(x_pos+1e-5)+1),beta)
     x_neg = -1/torch.pow(torch.log(1/(-x_neg+1e-5)+1),beta)
-    return x_pos+
+    return x_pos+x_neg
 
 def computeGramMatrix(A, B):
     """
