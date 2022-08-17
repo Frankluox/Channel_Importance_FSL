@@ -1,22 +1,7 @@
 from torchvision.datasets import ImageFolder
 
 class general_dataset(ImageFolder):
-    r"""The standard dataset. ::
-         
-        root
-        |
-        |
-        |---train
-        |    |--n01532829
-        |    |   |--n0153282900000005.jpg
-        |    |   |--n0153282900000006.jpg
-        |    |              .
-        |    |              .
-        |    |--n01558993
-        |        .
-        |        .
-        |---val
-        |---test  
+    r"""The standard dataset.
     Args:
         root: Root directory path.
         transform: pytorch transforms for transforms and tensor conversion

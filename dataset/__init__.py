@@ -6,3 +6,4 @@ from .ISIC import ISIC
 from .omniglot import omniglot
 from .vggflower import OxfordFlowers102Dataset
 from .sampler import CategoriesSampler
+from .miniImageNet import miniImageNet
