@@ -181,6 +181,8 @@ class MetaoptHead(nn.Module):
             mean_difference = torch.abs(mean_1-mean_2)
             Oracle_importance = 2/((std_1+1e-12)/(mean_difference+1e-12)+(std_2+1e-12)/(mean_difference+1e-12))
             Oracle_importance = F.normalize(Oracle_importance, p=2, dim=0, eps=1e-12)
+            
+            # Equivalent to Oracle_importance/all_mean; avoid numerical issues
             proportion = all_mean*Oracle_importance/torch.pow(all_mean+1e-12,2)
 
             # see appendix F, sometimes this helps
