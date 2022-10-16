@@ -2,12 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+import numpy as np
+import os
 
 def simple_transform(x, beta):
-    x = 1/torch.pow(torch.log(1/x+1),beta)
-    return x
-
-def extended_simple_transform(x, beta):
     zero_tensor = torch.zeros_like(x)
     x_pos = torch.maximum(x, zero_tensor)
     x_neg = torch.minimum(x, zero_tensor)
@@ -20,11 +18,17 @@ def extended_simple_transform(x, beta):
 class PN_head(nn.Module):
     r"""The metric-based protypical classifier from ``Prototypical Networks for Few-shot Learning''.
     """
-    def __init__(self) -> None:
+    def __init__(self, use_Oracle, statistics_root,dataset_name) -> None:
         super().__init__()
+        self.use_Oracle = use_Oracle
+        if self.use_Oracle:
+            self.mean = torch.from_numpy(np.load(os.path.join(statistics_root, "meanof"+dataset_name+".npy")))
+            self.std = torch.from_numpy(np.load(os.path.join(statistics_root, "stdof"+dataset_name+".npy")))
+            self.num = np.load(os.path.join(statistics_root, "numof"+dataset_name+".npy")).tolist()
+            self.abs_mean = torch.from_numpy(np.load(os.path.join(statistics_root, "abs_meanof"+dataset_name+".npy")))
 
     def forward(self, features_test: Tensor, features_train: Tensor, 
-                way: int, shot: int, use_simple: bool) -> Tensor:
+                way: int, shot: int, use_simple: bool, use_Oracle: bool, all_labels: list = None) -> Tensor:
         r"""Take batches of few-shot training examples and testing examples as input,
             output the logits of each testing examples.
 
@@ -40,10 +44,47 @@ class PN_head(nn.Module):
             classification_scores: The calculated logits of testing examples.
                                    size: [batch_size, num_query, way]
         """
+        assert not (use_simple and use_Oracle)
+        if use_Oracle:
+            assert features_train.size(0) == features_test.size(0) == 1
+            assert way == 2
+
         if features_train.dim() == 5:
             features_train = F.adaptive_avg_pool2d(features_train, 1).squeeze_(-1).squeeze_(-1)
             features_test = F.adaptive_avg_pool2d(features_test, 1).squeeze_(-1).squeeze_(-1)
+
         assert features_train.dim() == features_test.dim() == 3
+
+        if use_Oracle:
+            mean_1 = self.mean[all_labels[0]].to(features_train.device)
+            mean_2 = self.mean[all_labels[1]].to(features_train.device)
+
+            abs_mean_1 = self.abs_mean[all_labels[0]].to(features_train.device)
+            abs_mean_2 = self.abs_mean[all_labels[1]].to(features_train.device)
+            
+            std_1 = self.std[all_labels[0]].to(features_train.device)
+            std_2 = self.std[all_labels[1]].to(features_train.device)
+
+            num_1 = self.num[all_labels[0]]
+            num_2 = self.num[all_labels[1]]
+
+            all_mean = (num_1*abs_mean_1+num_2*abs_mean_2)/(num_1+num_2)
+            mean_difference = torch.abs(mean_1-mean_2)
+            Oracle_importance = 2/((std_1+1e-12)/(mean_difference+1e-12)+(std_2+1e-12)/(mean_difference+1e-12))
+            Oracle_importance = F.normalize(Oracle_importance, p=2, dim=0, eps=1e-12)
+            proportion = all_mean*Oracle_importance/torch.pow(all_mean+1e-12,2)
+
+            # see appendix F, sometimes this helps
+            # single = torch.randn_like(proportion).fill_(1.)
+            # proportion = torch.where(proportion>50.,single,proportion)#others
+
+        
+            proportion_train = proportion.unsqueeze(0).unsqueeze(0).repeat(features_train.size(0),features_train.size(1),1)
+            proportion_test = proportion.unsqueeze(0).unsqueeze(0).repeat(features_test.size(0),features_test.size(1),1)
+
+            features_train = features_train*proportion_train
+            features_test = features_test*proportion_test
+
 
         batch_size = features_train.size(0)
             
@@ -62,5 +103,5 @@ class PN_head(nn.Module):
 
         return classification_scores
 
-def create_model():
-    return PN_head()
+def create_model(**kwargs):
+    return PN_head(**kwargs)
