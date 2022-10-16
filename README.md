@@ -8,9 +8,15 @@ Few-Shot Learning (FSL) requires vision models to quickly adapt to brand-new cla
 
 ![](simple_transformation.png)
 
+## Updates
+
+We have added the extended version of oracle transformation in each classifier. Compared to the version in our ICML paper, the extended version additionally supports features taking negative values. So any pretrained backbone can be tested, including ResNets using LeakyReLU or variants of ViT like SwinTransformer. We will include the extended version and far more analysis about feature importance of visual representions in an extended paper. If you have any problem, please open an issue or just contact the author Xu Luo through the email.
+
+
 ## Where to find the simple channel-wise transformtion
 
 The single-line `simple_transform` function has been put inside each test-time classifier, e.g., see in `architectures/classifier/proto_head.py`.
+
 
 ## Installation
 A list of packages to install is available in `requirements.txt`, just install them using command:
