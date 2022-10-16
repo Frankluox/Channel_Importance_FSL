@@ -2,18 +2,9 @@ import torch
 import torch.nn as nn
 from qpth.qp import QPFunction
 import torch.nn.functional as F
+import numpy as np
+import os
 
-def simple_transform(x, beta):
-    x = 1/torch.pow(torch.log(1/x+1),beta)
-    return x
-
-def extended_simple_transform(x, beta):
-    zero_tensor = torch.zeros_like(x)
-    x_pos = torch.maximum(x, zero_tensor)
-    x_neg = torch.minimum(x, zero_tensor)
-    x_pos = 1/torch.pow(torch.log(1/(x_pos+1e-5)+1),beta)
-    x_neg = -1/torch.pow(torch.log(1/(-x_neg+1e-5)+1),beta)
-    return x_pos+x_neg
 
 def computeGramMatrix(A, B):
     """
@@ -39,25 +30,18 @@ def batched_kronecker(matrix1, matrix2):
     return torch.bmm(matrix1_flatten.unsqueeze(2), matrix2_flatten.unsqueeze(1)).reshape([matrix1.size()[0]] + list(matrix1.size()[1:]) + list(matrix2.size()[1:])).permute([0, 1, 3, 2, 4]).reshape(matrix1.size(0), matrix1.size(1) * matrix2.size(1), matrix1.size(2) * matrix2.size(2))
 
 
-def one_hot(indices, depth):
-    """
-    Returns a one-hot tensor.
-    This is a PyTorch equivalent of Tensorflow's tf.one_hot.
-        
-    Parameters:
-      indices:  a (n_batch, m) Tensor or (m) Tensor.
-      depth: a scalar. Represents the depth of the one hot dimension.
-    Returns: a (n_batch, m, depth) Tensor or (m, depth) Tensor.
-    """
-
-    encoded_indicies = torch.zeros(indices.size() + torch.Size([depth])).cuda()
-    index = indices.view(indices.size()+torch.Size([1]))
-    encoded_indicies = encoded_indicies.scatter_(1,index,1)
-    
-    return encoded_indicies
 
 
-def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, double_precision=True, maxIter=3):
+
+def simple_transform(x, beta):
+    zero_tensor = torch.zeros_like(x)
+    x_pos = torch.maximum(x, zero_tensor)
+    x_neg = torch.minimum(x, zero_tensor)
+    x_pos = 1/torch.pow(torch.log(1/(x_pos+1e-5)+1),beta)
+    x_neg = -1/torch.pow(torch.log(1/(-x_neg+1e-5)+1),beta)
+    return x_pos+x_neg
+
+def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, C_reg=0.1, double_precision=True, maxIter=3):
     """
     Fits the support set with multi-class SVM and 
     returns the classification score on the query set.
@@ -76,13 +60,9 @@ def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, 
       C_reg: a scalar. Represents the cost parameter C in SVM.
     Returns: a (tasks_per_batch, n_query, n_way) Tensor.
     """
-    if support.dim() == 5:
-        support = F.adaptive_avg_pool2d(support, 1).squeeze_(-1).squeeze_(-1)
-        query = F.adaptive_avg_pool2d(query, 1).squeeze_(-1).squeeze_(-1)
-    if use_simple:
-        query = simple_transform(query,1.3)
-        support = simple_transform(support,1.3)
-    support_labels = torch.eye(n_way).unsqueeze(0).repeat(n_shot,1,1).reshape(n_shot*n_way, -1).unsqueeze(0).repeat(support.size(0),1,1)
+
+    support_labels = torch.eye(n_way).unsqueeze(0).repeat(n_shot,1,1).reshape(n_shot*n_way, -1).unsqueeze(0).repeat(support.size(0),1,1).to(support.device)
+
     # support_labels = torch.arange(n_way).unsqueeze(0).repeat(n_shot,1).reshape(-1).unsqueeze(0).repeat(support.size(0),1)
     # print(support_labels.shape)
     tasks_per_batch = query.size(0)
@@ -107,10 +87,12 @@ def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, 
     #\alpha is an (n_support, n_way) matrix
     kernel_matrix = computeGramMatrix(support, support)
 
-    id_matrix_0 = torch.eye(n_way).expand(tasks_per_batch, n_way, n_way).cuda()
+
+    id_matrix_0 = torch.eye(n_way).expand(tasks_per_batch, n_way, n_way).to(support.device)
+
     block_kernel_matrix = batched_kronecker(kernel_matrix, id_matrix_0)
     #This seems to help avoid PSD error from the QP solver.
-    block_kernel_matrix += 1.0 * torch.eye(n_way*n_support).expand(tasks_per_batch, n_way*n_support, n_way*n_support).cuda()
+    block_kernel_matrix += 1.0 * torch.eye(n_way*n_support).expand(tasks_per_batch, n_way*n_support, n_way*n_support).to(support.device)
 
     support_labels_one_hot = support_labels.reshape(tasks_per_batch, n_support * n_way)
     
@@ -121,25 +103,31 @@ def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, 
     #\alpha^m_i <= C^m_i \forall m,i
     #where C^m_i = C if m  = y_i,
     #C^m_i = 0 if m != y_i.
-    C = torch.eye(n_way * n_support).expand(tasks_per_batch, n_way * n_support, n_way * n_support).cuda()
+    C = torch.eye(n_way * n_support).expand(tasks_per_batch, n_way * n_support, n_way * n_support).to(support.device)
     h = C_reg * support_labels_one_hot
 
     #This part is for the equality constraints:
     #\sum_m \alpha^m_i=0 \forall i
-    id_matrix_2 = torch.eye(n_support).expand(tasks_per_batch, n_support, n_support).cuda()
+    id_matrix_2 = torch.eye(n_support).expand(tasks_per_batch, n_support, n_support).to(support.device)
 
-    A = batched_kronecker(id_matrix_2, torch.ones(tasks_per_batch, 1, n_way).cuda())
-    b = torch.zeros(tasks_per_batch, n_support).cuda()
+    A = batched_kronecker(id_matrix_2, torch.ones(tasks_per_batch, 1, n_way).to(support.device))
+    b = torch.zeros(tasks_per_batch, n_support).to(support.device)
 
     if double_precision:
-        G, e, C, h, A, b = [x.double().cuda() for x in [G, e, C, h, A, b]]
+        G, e, C, h, A, b = [x.double().to(support.device) for x in [G, e, C, h, A, b]]
     else:
-        G, e, C, h, A, b = [x.float().cuda() for x in [G, e, C, h, A, b]]
+        G, e, C, h, A, b = [x.float().to(support.device) for x in [G, e, C, h, A, b]]
 
     # Solve the following QP to fit SVM:
     #        \hat z =   argmin_z 1/2 z^T G z + e^T z
     #                 subject to Cz <= h
     # We use detach() to prevent backpropagation to fixed variables.
+    # print(G.device)
+    # print(e.detach().device)
+    # print(C.detach().device)
+    # print(h.detach().device)
+    # print(A.detach().device)
+    # print(b.detach().device)
     qp_sol = QPFunction(verbose=False, maxIter=maxIter)(G, e.detach(), C.detach(), h.detach(), A.detach(), b.detach())
 
     # Compute the classification score.
@@ -154,14 +142,68 @@ def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, use_simple, C_reg=0.1, 
     return logits
 
 class MetaoptHead(nn.Module):
-    def __init__(self):
+    def __init__(self, use_Oracle, statistics_root,dataset_name):
         super(MetaoptHead, self).__init__()
         self.head = MetaOptNetHead_SVM_CS
+        self.use_Oracle = use_Oracle
+        if self.use_Oracle:
+            self.mean = torch.from_numpy(np.load(os.path.join(statistics_root, "meanof"+dataset_name+".npy")))
+            self.std = torch.from_numpy(np.load(os.path.join(statistics_root, "stdof"+dataset_name+".npy")))
+            self.num = np.load(os.path.join(statistics_root, "numof"+dataset_name+".npy")).tolist()
+            self.abs_mean = torch.from_numpy(np.load(os.path.join(statistics_root, "abs_meanof"+dataset_name+".npy")))
         
-    def forward(self, query, support, n_way, n_shot, use_simple, **kwargs):
-        return self.head(query, support, n_way, n_shot, use_simple, **kwargs)
+    def forward(self, features_test, features_train, way, shot, use_simple, use_Oracle: bool, all_labels: list = None, **kwargs):
+        assert not (use_simple and use_Oracle)
+        if use_Oracle:
+            assert features_train.size(0) == features_test.size(0) == 1
+            assert way == 2
 
-def create_model():
-    return MetaoptHead()
+        if features_train.dim() == 5:
+            features_train = F.adaptive_avg_pool2d(features_train, 1).squeeze_(-1).squeeze_(-1)
+            features_test = F.adaptive_avg_pool2d(features_test, 1).squeeze_(-1).squeeze_(-1)
+        
+        assert features_train.dim() == features_test.dim() == 3
+
+        if use_Oracle:
+            mean_1 = self.mean[all_labels[0]].to(features_train.device)
+            mean_2 = self.mean[all_labels[1]].to(features_train.device)
+
+            abs_mean_1 = self.abs_mean[all_labels[0]].to(features_train.device)
+            abs_mean_2 = self.abs_mean[all_labels[1]].to(features_train.device)
+            
+            std_1 = self.std[all_labels[0]].to(features_train.device)
+            std_2 = self.std[all_labels[1]].to(features_train.device)
+
+            num_1 = self.num[all_labels[0]]
+            num_2 = self.num[all_labels[1]]
+
+            all_mean = (num_1*abs_mean_1+num_2*abs_mean_2)/(num_1+num_2)
+            mean_difference = torch.abs(mean_1-mean_2)
+            Oracle_importance = 2/((std_1+1e-12)/(mean_difference+1e-12)+(std_2+1e-12)/(mean_difference+1e-12))
+            Oracle_importance = F.normalize(Oracle_importance, p=2, dim=0, eps=1e-12)
+            proportion = all_mean*Oracle_importance/torch.pow(all_mean+1e-12,2)
+
+            # see appendix F, sometimes this helps
+            # single = torch.randn_like(proportion).fill_(1.)
+            # proportion = torch.where(proportion>50.,single,proportion)#others
+
+        
+            proportion_train = proportion.unsqueeze(0).unsqueeze(0).repeat(features_train.size(0),features_train.size(1),1)
+            proportion_test = proportion.unsqueeze(0).unsqueeze(0).repeat(features_test.size(0),features_test.size(1),1)
+
+            features_train = features_train*proportion_train
+            features_test = features_test*proportion_test
+
+        if use_simple:
+            features_test = simple_transform(features_test,1.3)
+            features_train = simple_transform(features_train,1.3)
+        
+        features_train = F.normalize(features_train, p=2, dim=2, eps=1e-12)
+        features_test = F.normalize(features_test, p=2, dim=2, eps=1e-12)
+
+        return self.head(features_test, features_train, way, shot, **kwargs)
+
+def create_model(**kwargs):
+    return MetaoptHead(**kwargs)
 
 
