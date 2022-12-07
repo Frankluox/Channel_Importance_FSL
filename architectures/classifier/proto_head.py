@@ -18,7 +18,7 @@ def simple_transform(x, beta):
 class PN_head(nn.Module):
     r"""The metric-based protypical classifier from ``Prototypical Networks for Few-shot Learning''.
     """
-    def __init__(self, use_Oracle, statistics_root,dataset_name) -> None:
+    def __init__(self, use_Oracle, statistics_root=None,dataset_name=None) -> None:
         super().__init__()
         self.use_Oracle = use_Oracle
         if self.use_Oracle:
