@@ -142,7 +142,7 @@ def MetaOptNetHead_SVM_CS(query, support, n_way, n_shot, C_reg=0.1, double_preci
     return logits
 
 class MetaoptHead(nn.Module):
-    def __init__(self, use_Oracle, statistics_root,dataset_name):
+    def __init__(self, use_Oracle, statistics_root=None,dataset_name=None):
         super(MetaoptHead, self).__init__()
         self.head = MetaOptNetHead_SVM_CS
         self.use_Oracle = use_Oracle
