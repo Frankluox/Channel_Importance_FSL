@@ -53,7 +53,7 @@ def parse_option():
                         help='Number of workers for dataloader')
     parser.add_argument('--batch_size', type=int, default=4,
                         help='number of tasks per batch')
-    parser.add_argument('--use_oracle', type=bool, default=False,
+    parser.add_argument('--use_oracle', type=str, default="False",
                         help='whether use oracle transformation')
 
     opt = parser.parse_args()
