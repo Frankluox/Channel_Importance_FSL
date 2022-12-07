@@ -1,6 +1,6 @@
 import argparse
 from torchvision import transforms
-from dataset import AircraftDataset, Chest, coco, general_dataset, ISIC, omniglot, OxfordFlowers102Dataset, CategoriesSampler
+from dataset import AircraftDataset, Chest, coco, general_dataset, ISIC, omniglot, OxfordFlowers102Dataset, MiniImageNet, CategoriesSampler
 from architectures import get_backbone, get_classifier
 import tqdm
 import torch
@@ -125,7 +125,9 @@ def main():
                             normalize])
 
     #obtain dataset
-    if args.dataset_name == 'Aircraft':
+    if args.dataset_name == 'miniImageNet':
+        dataset = MiniImageNet(args.dataset_root, transform)
+    elif args.dataset_name == 'Aircraft':
         dataset = AircraftDataset(args.dataset_root, transform)
     elif args.dataset_name == 'Omniglot':
         dataset = omniglot(args.dataset_root, transform)
