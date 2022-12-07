@@ -17,7 +17,7 @@ def simple_transform(x, beta):
     return x_pos+x_neg
 
 class Logistic_Regression(nn.Module):
-    def __init__(self, use_Oracle, statistics_root,dataset_name):
+    def __init__(self, use_Oracle, statistics_root=None,dataset_name=None):
         super().__init__()
         self.use_Oracle = use_Oracle
         if self.use_Oracle:
