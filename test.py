@@ -104,6 +104,7 @@ def compute_dataset_statistics(model, dataset_name, dataset, num_workers, statis
 
 def main():
     args = parse_option()
+    args.use_oracle = False if args.use_oracle == "False" else True
 
 
     if args.backbone_name == 'resnet50':
