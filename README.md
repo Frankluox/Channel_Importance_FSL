@@ -55,8 +55,8 @@ Download any of the 19 test-time datasets in Table 1 of our paper for evaluation
 - Real: Download and extract [real.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/real.zip), and use the resultant folder as the root directory.
 - Sketch: Download and extract [sketch.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/sketch.zip), and use the resultant folder as the root directory.
 - Infograph: Download and extract [infograph.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/infograph.zip), and use the resultant folder as the root directory.
-- Painting: Download and extract [painting.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/painting.zip), and use the resultant folder as the root directory.
-- Clipart: Download and extract [clipart.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/clipart.zip), and use the resultant folder as the root directory.
+- Painting: Download and extract [painting.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/groundtruth/painting.zip), and use the resultant folder as the root directory.
+- Clipart: Download and extract [clipart.zip](http://csr.bu.edu/ftp/visda/2019/multi-source/groundtruth/clipart.zip), and use the resultant folder as the root directory.
 
 ## Citation
 
