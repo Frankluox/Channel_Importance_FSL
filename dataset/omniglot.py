@@ -1,5 +1,7 @@
 from torchvision.datasets import Omniglot
 from torch.utils.data import Dataset
+from PIL import Image
+import os
 
 class omniglot(Dataset):
     def __init__(self, root, transform):
@@ -18,7 +20,7 @@ class omniglot(Dataset):
             tuple: (image, target) where target is index of the target character class.
         """
         image_name, character_class = self.dataset._flat_character_images[index]
-        image_path = join(self.dataset.target_folder, self.dataset._characters[character_class], image_name)
+        image_path = os.path.join(self.dataset.target_folder, self.dataset._characters[character_class], image_name)
         image = Image.open(image_path, mode="r").convert('RGB')
 
         if self.dataset.transform:
