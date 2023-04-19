@@ -37,7 +37,7 @@ After obtaining pre-trained models and downloading needed datasets (see below), 
 
 Download any of the 19 test-time datasets in Table 1 of our paper for evaluation. 
 
-- miniImageNet: Download and extract [miniimagenet.tar](https://docs.google.com/uc?export=download&id=191cFzwwNTzG_mHUDABF0Nh77cI6pa-qq), and use the resultant folder as the root directory.
+- miniImageNet: Download and extract [miniImageNet.zip](https://drive.google.com/file/d/1QEbHFIOKIM9KmId175QaLK-r22kgd7br/view?usp=share_link), and use the resultant folder as the root directory.
 - CUB: Download and extract [cub.tar](https://docs.google.com/uc?export=download&id=1B8jmZin9teye7Lte9ZKsQ3lyMASbxune), and use the `images/` folder as the root directory.
 - Textures: Download and extract [dtd-r1.0.1.tar.gz](https://www.robots.ox.ac.uk/~vgg/data/dtd/download/dtd-r1.0.1.tar.gz), and use the `images/` folder as the root directory.
 - Traffic Signs: Download and extract [GTSRB_Final_Training_Images.zip](https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/GTSRB_Final_Training_Images.zip), and use the `Final_Training/Images/` folder as the root directory.
