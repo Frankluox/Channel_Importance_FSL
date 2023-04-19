@@ -39,8 +39,6 @@ def parse_option():
 
 
     # settings
-    parser.add_argument('--num_test', type=int, default=5,
-                        help='Number of test runs')
     parser.add_argument('--num_task', type=int, default=2000,
                         help='Number of tasks per run')
     parser.add_argument('--way', type=int, default=5,
@@ -204,65 +202,56 @@ def main():
     if args.use_oracle == True:
         test_acc_record_Oracle = np.zeros((args.num_test,))
 
-    for i in range(1, args.num_test+1):
-        print(f"The {i}-th test run:")
-        ave_acc_None = Averager()
-        ave_acc_Simple = Averager()
-        if args.use_oracle == True:
-            ave_acc_Oracle = Averager()
-        data_loader_tqdm = tqdm.tqdm(data_loader)
-        with torch.no_grad():
-            for _, batch in enumerate(data_loader_tqdm, 1):
-                data, labels = [_ for _ in batch]
-                if args.use_oracle == True:
-                    all_labels = []
-                    for label in labels:
-                        j = int(label)
-                        if j not in all_labels:
-                            all_labels.append(j)
-                if torch.cuda.is_available():
-                    data = data.cuda()
-                num_support_samples = args.way * args.shot
-                data = model(data)
-                data = data.reshape([args.batch_size, -1] + list(data.shape[-3:]))
-                data_support = data[:, :num_support_samples]
-                data_query = data[:, num_support_samples:]
-
-                logit_None = classifier(data_query, data_support, args.way, args.shot, False, False)
-                logit_Simple = classifier(data_query, data_support, args.way, args.shot, True, False)
-
-                if args.use_oracle == True:
-                    logit_Oracle = classifier(data_query, data_support, args.way, args.shot, False, True, all_labels)
-                    # print(logit_Oracle.shape)
-                    logit_Oracle = logit_Oracle.reshape(query_label.size(0),-1)
-                    acc_Oracle = count_acc(logit_Oracle, query_label) * 100
-                    ave_acc_Oracle.add(acc_Oracle)
-
-                logit_None = logit_None.reshape(query_label.size(0),-1)
-                logit_Simple = logit_Simple.reshape(query_label.size(0),-1)
-
-                acc_None = count_acc(logit_None, query_label) * 100
-                acc_Simple = count_acc(logit_Simple, query_label) * 100
-                ave_acc_None.add(acc_None)
-                ave_acc_Simple.add(acc_Simple)
 
 
-        test_acc_record_None[i-1] = ave_acc_None.item()
-        test_acc_record_Simple[i-1] = ave_acc_Simple.item()
-        if args.use_oracle == True:
-            test_acc_record_Oracle[i-1] = ave_acc_Oracle.item()
-        print("The original accuracy for the {}-th test run: {:.2f}%".format(i,ave_acc_None.item()))
-        print("The accuracy using simple transformation for the {}-th test run: {:.2f}%\n".format(i,ave_acc_Simple.item()))
-        if args.use_oracle == True:
-            print("The accuracy using oracle transformation for the {}-th test run: {:.2f}%\n".format(i,ave_acc_Oracle.item()))
-    
-    mean_None = np.mean(test_acc_record_None)
-    confidence_interval_None = 1.96 * np.std(test_acc_record_None)
-    mean_Simple = np.mean(test_acc_record_Simple)
-    confidence_interval_Simple = 1.96 * np.std(test_acc_record_Simple)
+    acc_Nones = []
+    acc_Simples = []
     if args.use_oracle == True:
-        mean_Oracle = np.mean(test_acc_record_Oracle)
-        confidence_interval_Oracle = 1.96 * np.std(test_acc_record_Oracle)
+        acc_Oracles = []
+    data_loader_tqdm = tqdm.tqdm(data_loader)
+    with torch.no_grad():
+        for _, batch in enumerate(data_loader_tqdm, 1):
+            data, labels = [_ for _ in batch]
+            if args.use_oracle == True:
+                all_labels = []
+                for label in labels:
+                    j = int(label)
+                    if j not in all_labels:
+                        all_labels.append(j)
+            if torch.cuda.is_available():
+                data = data.cuda()
+            num_support_samples = args.way * args.shot
+            data = model(data)
+            data = data.reshape([args.batch_size, -1] + list(data.shape[-3:]))
+            data_support = data[:, :num_support_samples]
+            data_query = data[:, num_support_samples:]
+
+            logit_None = classifier(data_query, data_support, args.way, args.shot, False, False)
+            logit_Simple = classifier(data_query, data_support, args.way, args.shot, True, False)
+
+            if args.use_oracle == True:
+                logit_Oracle = classifier(data_query, data_support, args.way, args.shot, False, True, all_labels)
+                # print(logit_Oracle.shape)
+                logit_Oracle = logit_Oracle.reshape(query_label.size(0),-1)
+                acc_Oracle = count_acc(logit_Oracle, query_label) * 100
+                acc_Oracles.append(acc_Oracle)
+
+            logit_None = logit_None.reshape(query_label.size(0),-1)
+            logit_Simple = logit_Simple.reshape(query_label.size(0),-1)
+
+            acc_None = count_acc(logit_None, query_label) * 100
+            acc_Simple = count_acc(logit_Simple, query_label) * 100
+            acc_Nones.append(acc_None)
+            acc_Simples.append(acc_Simple)
+
+    
+    mean_acc_Nones = np.mean(acc_Nones)
+    confidence_interval_None = 1.96 * np.std(acc_Nones)/math.sqrt(len(acc_Nones))
+    mean_acc_Simples = np.mean(acc_Simples)
+    confidence_interval_Simple = 1.96 * np.std(acc_Simples)/math.sqrt(len(acc_Simples))
+    if args.use_oracle == True:
+        mean_acc_Oracles = np.mean(acc_Oracles)
+        confidence_interval_Oracle = 1.96 * np.std(acc_Oracles)/math.sqrt(len(acc_Oracles))
 
     print("Average original accuracy with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_None, confidence_interval_None))
     print("Average accuracy using simple transformation with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_Simple, confidence_interval_Simple))
