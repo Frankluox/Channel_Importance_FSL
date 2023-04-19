@@ -15,7 +15,7 @@ class miniImageNet(ImageFolder):
 
         self.label = self.targets  # label of all data
 
-    def __getitem__(self, i):
+    def __getitem__(self, index):
         path, target = self.samples[index]
         sample = self.loader(path)
         if self.transform is not None:

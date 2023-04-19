@@ -10,6 +10,7 @@ import numpy as np
 import os
 from torch.utils.data import DataLoader
 import collections
+import math
 
 backbones = ['resnet12', 'resnet50', 'WRN_28_10', 'conv-4', 'SEnet']
 
@@ -196,12 +197,6 @@ def main():
         query_label = query_label.cuda()
 
     #None: original performance. Simple: performance using simple transformation
-    test_acc_record_None = np.zeros((args.num_test,))
-    test_acc_record_Simple = np.zeros((args.num_test,))
-
-    if args.use_oracle == True:
-        test_acc_record_Oracle = np.zeros((args.num_test,))
-
 
 
     acc_Nones = []
@@ -253,10 +248,10 @@ def main():
         mean_acc_Oracles = np.mean(acc_Oracles)
         confidence_interval_Oracle = 1.96 * np.std(acc_Oracles)/math.sqrt(len(acc_Oracles))
 
-    print("Average original accuracy with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_None, confidence_interval_None))
-    print("Average accuracy using simple transformation with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_Simple, confidence_interval_Simple))
+    print("Average original accuracy with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_acc_Nones, confidence_interval_None))
+    print("Average accuracy using simple transformation with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_acc_Simples, confidence_interval_Simple))
     if args.use_oracle == True:
-        print("Average accuracy using oracle transformation with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_Oracle, confidence_interval_Oracle))
+        print("Average accuracy using oracle transformation with 95% confidence interval: {:.2f}% +- {:.2f}".format(mean_acc_Oracles, confidence_interval_Oracle))
         
 if __name__ == '__main__':
     main()

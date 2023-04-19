@@ -3,4 +3,4 @@ python test.py --backbone_name resnet12\
  --dataset_name miniImageNet\
  --dataset_root /path/to/root\
  --classifier_name proto_head\ 
- --use_Oracle True
+ --use_oracle True
